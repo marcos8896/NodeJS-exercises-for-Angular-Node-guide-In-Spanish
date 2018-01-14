@@ -32,7 +32,7 @@ app.get('/count', (req, res) => {
   const pendienteBuscado = pendientesPorHacer.find( pendiente => pendiente.id == idPendiente );
   
   if( pendienteBuscado === undefined )
-      return res.status(404).json({ mensaje : "No se encontró esa lista en el servidor :(" });
+      return res.status(404).json({ mensaje : "No se encontró ese pendiente en el servidor :(" });
   else
     return res.status(200).json(pendienteBuscado);
 })
