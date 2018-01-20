@@ -22,7 +22,7 @@ const pendientesPorHacer = [
 function obtenerSiguienteId() {
 
   const tamañoArray = pendientesPorHacer.length;
-  let idMayor = pendientesPorHacer[0].id;
+  let idMayor = pendientesPorHacer[0].id || 0;
 
   for (let i = 1; i < tamañoArray; i++) {
     if(pendientesPorHacer[i].id > idMayor)
