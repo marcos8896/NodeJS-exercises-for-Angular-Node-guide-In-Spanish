@@ -94,7 +94,7 @@ app.get('/', (req, res) => {
 
 })
 
-//Agregar un nuevo elemento al array.
+//Modifica un elemento existente al array.
 .put('/:idPendiente', (req, res) => {
 
   const pendienteIndex = encontrarPorId( req.params.idPendiente );

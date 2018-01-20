@@ -7,8 +7,7 @@ const bodyParser = require('body-parser');
 app.use(bodyParser.json());
 
 const mysql = require('mysql');
-
-var conexion = mysql.createConnection({
+const conexion = mysql.createConnection({
   host: '127.0.0.1',
   user: 'root',
   password: 'qwerty1234',
@@ -27,141 +26,221 @@ conexion.connect(err => {
 
 
 
-//Consulta general
+
+//Consulta general de todos los pendientes en la base de datos.
 app.get('/', (req, res) => {
 
   if ( conexion ) {
     conexion.query('SELECT pendiente_id, descripcion, estado FROM pendientes', (error, resultados) => {
 
+      //Si hay un error, le respondemos al cliente con el error.
       if (error){
         return responderAlCliente( error, res );
       }
 
+      //Si no hay error, le respondemos al cliente con los
+      //resultados de la query.
       return responderAlCliente( null, res, resultados );
     })
   } else {
+    //Si hay un error en la conexión, se lo indicamos al cliente.
     return responderAlCliente('Hubo con error con la conexión a MySQL :(', res)
   }
 
 })
 
 
-  //Consultar cuando registros hay en el array de pendientesPorHacer.
-  .get('/count', (req, res) => {
 
-    const miRespuesta = {
-      "numeroDeRegistros": pendientesPorHacer.length
+
+//Consultar cuando registros hay en la tabla de pendientes.
+.get('/count', (req, res) => {
+  if ( conexion ) {
+    conexion.query('SELECT COUNT (pendiente_id) AS numero_de_registros FROM pendientes', (error, contador) => {
+
+      //Si hay un error, le respondemos al cliente con el error.
+      if (error){
+        return responderAlCliente( error, res );
+      }
+
+      //Si no hay error, le respondemos al cliente con
+      //el contador de la query.
+      return responderAlCliente( null, res, contador );
+    })
+  } else {
+    //Si hay un error en la conexión, se lo indicamos al cliente.
+    return responderAlCliente('Hubo con error con la conexión a MySQL :(', res)
+  }
+  
+})
+
+
+
+
+//Consultar cuando registros hay en la tabla de pendientes.
+.get('/siguienteIdAutoIncrementable', (req, res) => {
+
+  if ( conexion ) {
+    conexion.query(`SELECT \`AUTO_INCREMENT\` AS siguiente_id_autoincrementable
+    FROM  INFORMATION_SCHEMA.TABLES
+    WHERE TABLE_SCHEMA = 'db_pendientes'
+    AND   TABLE_NAME   = 'pendientes';`, (error, siguienteId) => {
+
+      //Si hay un error, le respondemos al cliente con el error.
+      if (error){
+        return responderAlCliente( error, res );
+      }
+
+      //Si no hay error, le respondemos al cliente con
+      //el siguienteId.
+      return responderAlCliente( null, res, siguienteId );
+    })
+  } else {
+    //Si hay un error en la conexión, se lo indicamos al cliente.
+    return responderAlCliente('Hubo con error con la conexión a MySQL :(', res)
+  }
+  
+})
+
+
+
+
+//Consultar un oendiente por id.
+.get('/:idPendiente', (req, res) => {
+
+  const idPendiente = req.params.idPendiente;
+
+  if ( conexion ) {
+    conexion.query(`SELECT pendiente_id, descripcion, estado ç
+                    FROM pendientes 
+                    WHERE pendiente_id = ?`, [idPendiente], (error, pendiente) => {
+
+      //Si hay un error, le respondemos al cliente con el error.
+      if (error){
+        return responderAlCliente( error, res );
+      }
+
+      //Si no hay error, le respondemos al cliente con
+      //el pendiente retornado obtenido de la query.
+      return responderAlCliente( null, res, pendiente );
+    })
+  } else {
+    //Si hay un error en la conexión, se lo indicamos al cliente.
+    return responderAlCliente('Hubo con error con la conexión a MySQL :(', res)
+  }
+
+})
+
+
+
+
+//Agregar un nuevo pendiente a la base de datos.
+.post('/', (req, res) => {
+
+  /*
+    pendiente_id lo mandamos como null para
+    que el AUTO_INCREMENT de MySQL asigne
+    a pendiente_id autoincrementalmente.
+  */
+  const nuevoPendiente = {
+    pendiente_id: null,
+    descripcion: req.body.descripcion,
+    estado: req.body.estado
+  }
+
+  if ( conexion ) {
+
+    conexion.query('INSERT INTO pendientes SET ?', [nuevoPendiente], (error, respuesta) => {
+
+      if ( error ) {
+        //Si hay un error, le respondemos al cliente con el error.
+        return responderAlCliente( error, res );
+      }
+
+      //Si no hay error, le respondemos al cliente con
+      //la repuesta retornada, obtenida de la query.
+      return responderAlCliente( null, res, respuesta )
+        
+    });
+  } else 
+      return cb('Hubo con error con la conexión a MySQL :(');
+
+})
+
+
+
+
+//Modifica un pendiente existente en la base de datos.
+.put('/:idPendiente', (req, res) => {
+
+  const idPendiente = req.params.idPendiente;
+
+  const pendientePorEditar = {
+    pendiente_id: idPendiente,
+    descripcion: req.body.descripcion,
+    estado: req.body.estado
+  }
+
+  conexion.query(`UPDATE pendientes 
+                    SET descripcion = ?, estado = ? 
+                    WHERE pendiente_id = ?`,
+
+    [pendientePorEditar.descripcion,
+      pendientePorEditar.estado,
+      pendientePorEditar.pendiente_id], (error, respuesta) => {
+    
+    if ( error ) {
+      //Si hay un error, le respondemos al cliente con el error.
+      return responderAlCliente( error, res );
     }
-    return res.status(200).json(miRespuesta);
-  })
+
+    //Si no hay error, le respondemos al cliente con
+    //la repuesta retornada, obtenida de la query.
+    return responderAlCliente( null, res, respuesta )
+
+});
 
 
-  //Consultar un elemento en el array de pendientesPorHacer por Id.
-  .get('/:idPendiente', (req, res) => {
-
-    const pendienteIndex = encontrarPorId(req.params.idPendiente);
-
-    if (pendienteIndex === -1)
-      return res.status(404).json({
-        mensaje: "No se encontró ese pendiente en el servidor :("
-      });
-    else
-      return res.status(200).json(pendientesPorHacer[pendienteIndex]);
-
-  })
+})
 
 
-  //Agregar un nuevo elemento al array.
-  .post('/', (req, res) => {
 
-    //Body Parser nos permite obtener los parámetros de las peticiones POST
-    //en el objeto req.body
-    const nuevoPendiente = {
-      id: obtenerSiguienteId(),
-      descripcion: req.body.descripcion,
-      completado: req.body.completado
-    }
+//Elimina un pendiente existente en la base de datos.
+.delete('/:idPendiente', (req, res) => {
 
-    pendientesPorHacer.push(nuevoPendiente);
+  const idPendiente = req.params.idPendiente;
 
-    const miRespuesta = {
-      registroAgregado: nuevoPendiente,
-      mensaje: "Registro agregado exitosamente :)"
-    }
+  if ( conexion ) {
+    conexion.query(`DELETE FROM pendientes 
+                    WHERE pendiente_id = ?`, [idPendiente], (error, respuesta) => {
 
-    return res.status(200).json(miRespuesta);
+      //Si hay un error, le respondemos al cliente con el error.
+      if (error){
+        return responderAlCliente( error, res );
+      }
 
-  })
+      //Si no hay error, le respondemos al cliente con
+      //la respuesta retornada obtenido de la query.
+      return responderAlCliente( null, res, respuesta );
+    })
+  } else {
+    //Si hay un error en la conexión, se lo indicamos al cliente.
+    return responderAlCliente('Hubo con error con la conexión a MySQL :(', res)
+  }
 
-  //Agregar un nuevo elemento al array.
-  .put('/:idPendiente', (req, res) => {
-
-    const pendienteIndex = encontrarPorId(req.params.idPendiente);
-
-    if (pendienteIndex === -1) {
-      return res.status(404).json({
-        mensaje: "No se encontró ese pendiente en el servidor :("
-      });
-    }
-
-    //Body Parser nos permite obtener los parámetros de las peticiones PUT
-    //en el objeto req.body 
-    console.log("tipo", typeof (req.body.completado));
-    let pendienteEditado = {
-      id: pendientesPorHacer[pendienteIndex].id,
-      descripcion: req.body.descripcion || pendientesPorHacer[pendienteIndex].descripcion,
-      completado: req.body.completado !== undefined
-        ? req.body.completado
-        : pendientesPorHacer[pendienteIndex].completado
-    }
-    console.log('pendienteEditado.completado: ', pendienteEditado.completado);
+})
 
 
-    //Reemplazamos el pendiente actual por el modificado.
-    pendientesPorHacer[pendienteIndex] = pendienteEditado;
 
-    const miRespuesta = {
-      registroModificado: pendienteEditado,
-      mensaje: "Registro editado exitosamente :)"
-    }
-
-    return res.status(200).json(miRespuesta);
-
-
-  })
-
-  .delete('/:idPendiente', (req, res) => {
-
-    const pendienteIndex = encontrarPorId(req.params.idPendiente);
-
-    if (pendienteIndex === -1) {
-      return res.status(404).json({
-        mensaje: "No se encontró ese pendiente en el servidor :("
-      });
-    }
-
-    const pendienteEliminado = pendientesPorHacer[pendienteIndex];
-
-    //Eliminamos el pendiente del array 'pendientesPorHacer'
-    //con Array.splice.
-    pendientesPorHacer.splice(pendienteIndex, 1);
-
-    const miRespuesta = {
-      registroEliminado: pendienteEliminado,
-      mensaje: "Registro eliminado exitosamente cx"
-    }
-
-    return res.status(200).json(miRespuesta);
-
-
-  })
-
+//Función auxiliar para responderle al cliente
 function responderAlCliente(error, res, datos) {
   if (error)
     res.status(500).json(error);
   else
     res.status(200).json(datos);
 }
+
+
+
 
 const portExpress = 3000;
 const hostExpress = '127.0.0.1';
