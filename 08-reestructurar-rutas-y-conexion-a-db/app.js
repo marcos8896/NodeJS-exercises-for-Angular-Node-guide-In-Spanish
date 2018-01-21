@@ -9,7 +9,7 @@ app.use(bodyParser.json());
 const env = require('dotenv');
 env.config();
 
-const pendiente = require('./pendientes/pendiente.routes');
+const pendiente = require('./pendiente/pendiente.routes');
 app.use('/pendiente', pendiente);
 
 const portExpress = process.env.EXPRESS_PORT;
