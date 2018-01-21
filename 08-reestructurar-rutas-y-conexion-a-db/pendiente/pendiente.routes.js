@@ -28,6 +28,7 @@ router
         return responderAlCliente('Hubo un error con la conexión a MySQL :(', res)
   })
 
+
   //Consultar cuando registros hay en la tabla de pendientes.
   .get('/count', (req, res) => {
     if ( conexion ) {
@@ -42,6 +43,7 @@ router
     } else 
         return responderAlCliente('Hubo un error con la conexión a MySQL :(', res);    
   })
+
 
   //Consultar cuando registros hay en la tabla de pendientes.
   .get('/siguienteIdAutoIncrementable', (req, res) => {
@@ -60,8 +62,6 @@ router
     } else 
         return responderAlCliente('Hubo con error con la conexión a MySQL :(', res);    
   })
-
-
 
 
   //Consultar un pendiente por id.
@@ -83,8 +83,6 @@ router
         return responderAlCliente('Hubo con error con la conexión a MySQL :(', res);
 
   })
-
-
 
 
   //Agregar un nuevo pendiente a la base de datos.
@@ -109,8 +107,6 @@ router
         return responderAlCliente('Hubo con error con la conexión a MySQL :(', res);
 
   })
-
-
 
 
   //Modifica un pendiente existente en la base de datos.
@@ -143,7 +139,6 @@ router
         return responderAlCliente('Hubo con error con la conexión a MySQL :(', res)
 
   })
-
 
 
   //Elimina un pendiente existente en la base de datos.
