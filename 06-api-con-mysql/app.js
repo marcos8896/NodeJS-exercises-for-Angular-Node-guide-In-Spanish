@@ -27,6 +27,17 @@ conexion.connect(err => {
 
 
 
+//Función auxiliar para responderle al cliente
+function responderAlCliente( error, res, datos ) {
+  if ( error )
+    res.status(500).json(error);
+  else
+    res.status(200).json(datos);
+}
+
+
+
+
 //Consulta general de todos los pendientes en la base de datos.
 app.get('/', (req, res) => {
 
@@ -44,7 +55,7 @@ app.get('/', (req, res) => {
     })
   } else {
     //Si hay un error en la conexión, se lo indicamos al cliente.
-    return responderAlCliente('Hubo con error con la conexión a MySQL :(', res)
+    return responderAlCliente('Hubo un error con la conexión a MySQL :(', res)
   }
 
 })
@@ -68,7 +79,7 @@ app.get('/', (req, res) => {
     })
   } else {
     //Si hay un error en la conexión, se lo indicamos al cliente.
-    return responderAlCliente('Hubo con error con la conexión a MySQL :(', res)
+    return responderAlCliente('Hubo un error con la conexión a MySQL :(', res)
   }
   
 })
@@ -104,13 +115,13 @@ app.get('/', (req, res) => {
 
 
 
-//Consultar un oendiente por id.
+//Consultar un pendiente por id.
 .get('/:idPendiente', (req, res) => {
 
   const idPendiente = req.params.idPendiente;
 
   if ( conexion ) {
-    conexion.query(`SELECT pendiente_id, descripcion, estado ç
+    conexion.query(`SELECT pendiente_id, descripcion, estado
                     FROM pendientes 
                     WHERE pendiente_id = ?`, [idPendiente], (error, pendiente) => {
 
@@ -162,7 +173,7 @@ app.get('/', (req, res) => {
         
     });
   } else 
-      return cb('Hubo con error con la conexión a MySQL :(');
+      return responderAlCliente('Hubo con error con la conexión a MySQL :(', res)
 
 })
 
@@ -180,25 +191,27 @@ app.get('/', (req, res) => {
     estado: req.body.estado
   }
 
-  conexion.query(`UPDATE pendientes 
+  if ( conexion ) {
+    conexion.query(`UPDATE pendientes 
                     SET descripcion = ?, estado = ? 
                     WHERE pendiente_id = ?`,
 
-    [pendientePorEditar.descripcion,
-      pendientePorEditar.estado,
-      pendientePorEditar.pendiente_id], (error, respuesta) => {
-    
-    if ( error ) {
-      //Si hay un error, le respondemos al cliente con el error.
-      return responderAlCliente( error, res );
-    }
+      [pendientePorEditar.descripcion,
+        pendientePorEditar.estado,
+        pendientePorEditar.pendiente_id], (error, respuesta) => {
+      
+      if ( error ) {
+        //Si hay un error, le respondemos al cliente con el error.
+        return responderAlCliente( error, res );
+      }
 
-    //Si no hay error, le respondemos al cliente con
-    //la repuesta retornada, obtenida de la query.
-    return responderAlCliente( null, res, respuesta )
+      //Si no hay error, le respondemos al cliente con
+      //la repuesta retornada, obtenida de la query.
+      return responderAlCliente( null, res, respuesta )
 
-});
-
+    });
+  } else 
+      return responderAlCliente('Hubo con error con la conexión a MySQL :(', res)
 
 })
 
@@ -224,20 +237,10 @@ app.get('/', (req, res) => {
     })
   } else {
     //Si hay un error en la conexión, se lo indicamos al cliente.
-    return responderAlCliente('Hubo con error con la conexión a MySQL :(', res)
+    return responderAlCliente('Hubo un error con la conexión a MySQL :(', res)
   }
 
 })
-
-
-
-//Función auxiliar para responderle al cliente
-function responderAlCliente(error, res, datos) {
-  if (error)
-    res.status(500).json(error);
-  else
-    res.status(200).json(datos);
-}
 
 
 
