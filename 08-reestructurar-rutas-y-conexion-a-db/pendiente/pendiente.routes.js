@@ -1,11 +1,9 @@
 const express = require('express');
 const router = express.Router();
 
-//Requerimos nuestro módulo que contiene la conexión
-//a mysql.
 const conexion = require('../db-config/mysql-connection');
 
-//Función auxiliar para responderle al cliente
+
 function responderAlCliente( error, res, datos ) {
   if ( error )
     res.status(500).json(error);
@@ -14,58 +12,36 @@ function responderAlCliente( error, res, datos ) {
 }
 
 
-
-
 //Consulta general de todos los pendientes en la base de datos.
 router
-
   .get('/', (req, res) => {
 
     if ( conexion ) {
       conexion.query('SELECT pendiente_id, descripcion, estado FROM pendientes', (error, resultados) => {
 
-        //Si hay un error, le respondemos al cliente con el error.
-        if (error){
+        if (error)
           return responderAlCliente( error, res );
-        }
 
-        //Si no hay error, le respondemos al cliente con los
-        //resultados de la query.
         return responderAlCliente( null, res, resultados );
       })
-    } else {
-      //Si hay un error en la conexión, se lo indicamos al cliente.
-      return responderAlCliente('Hubo un error con la conexión a MySQL :(', res)
-    }
-
+    } else 
+        return responderAlCliente('Hubo un error con la conexión a MySQL :(', res)
   })
-
-
-
 
   //Consultar cuando registros hay en la tabla de pendientes.
   .get('/count', (req, res) => {
     if ( conexion ) {
       conexion.query('SELECT COUNT (pendiente_id) AS numero_de_registros FROM pendientes', (error, contador) => {
 
-        //Si hay un error, le respondemos al cliente con el error.
         if (error){
           return responderAlCliente( error, res );
         }
 
-        //Si no hay error, le respondemos al cliente con
-        //el contador de la query.
         return responderAlCliente( null, res, contador );
       })
-    } else {
-      //Si hay un error en la conexión, se lo indicamos al cliente.
-      return responderAlCliente('Hubo un error con la conexión a MySQL :(', res)
-    }
-    
+    } else 
+        return responderAlCliente('Hubo un error con la conexión a MySQL :(', res);    
   })
-
-
-
 
   //Consultar cuando registros hay en la tabla de pendientes.
   .get('/siguienteIdAutoIncrementable', (req, res) => {
@@ -76,20 +52,13 @@ router
       WHERE TABLE_SCHEMA = '${process.env.DB_DATABASE}'
       AND   TABLE_NAME   = 'pendientes';`, (error, siguienteId) => {
 
-        //Si hay un error, le respondemos al cliente con el error.
-        if (error){
+        if (error)
           return responderAlCliente( error, res );
-        }
-
-        //Si no hay error, le respondemos al cliente con
-        //el siguienteId.
+        
         return responderAlCliente( null, res, siguienteId );
       })
-    } else {
-      //Si hay un error en la conexión, se lo indicamos al cliente.
-      return responderAlCliente('Hubo con error con la conexión a MySQL :(', res)
-    }
-    
+    } else 
+        return responderAlCliente('Hubo con error con la conexión a MySQL :(', res);    
   })
 
 
@@ -105,19 +74,13 @@ router
                       FROM pendientes 
                       WHERE pendiente_id = ?`, [idPendiente], (error, pendiente) => {
 
-        //Si hay un error, le respondemos al cliente con el error.
-        if (error){
+        if (error)
           return responderAlCliente( error, res );
-        }
 
-        //Si no hay error, le respondemos al cliente con
-        //el pendiente retornado obtenido de la query.
         return responderAlCliente( null, res, pendiente );
       })
-    } else {
-      //Si hay un error en la conexión, se lo indicamos al cliente.
-      return responderAlCliente('Hubo con error con la conexión a MySQL :(', res)
-    }
+    } else
+        return responderAlCliente('Hubo con error con la conexión a MySQL :(', res);
 
   })
 
@@ -127,11 +90,6 @@ router
   //Agregar un nuevo pendiente a la base de datos.
   .post('/', (req, res) => {
 
-    /*
-      pendiente_id lo mandamos como null para
-      que el AUTO_INCREMENT de MySQL asigne
-      a pendiente_id autoincrementalmente.
-    */
     const nuevoPendiente = {
       pendiente_id: null,
       descripcion: req.body.descripcion,
@@ -139,21 +97,16 @@ router
     }
 
     if ( conexion ) {
-
       conexion.query('INSERT INTO pendientes SET ?', [nuevoPendiente], (error, respuesta) => {
 
-        if ( error ) {
-          //Si hay un error, le respondemos al cliente con el error.
+        if ( error ) 
           return responderAlCliente( error, res );
-        }
 
-        //Si no hay error, le respondemos al cliente con
-        //la repuesta retornada, obtenida de la query.
         return responderAlCliente( null, res, respuesta )
           
       });
     } else 
-        return responderAlCliente('Hubo con error con la conexión a MySQL :(', res)
+        return responderAlCliente('Hubo con error con la conexión a MySQL :(', res);
 
   })
 
@@ -180,13 +133,9 @@ router
           pendientePorEditar.estado,
           pendientePorEditar.pendiente_id], (error, respuesta) => {
         
-        if ( error ) {
-          //Si hay un error, le respondemos al cliente con el error.
+        if ( error ) 
           return responderAlCliente( error, res );
-        }
 
-        //Si no hay error, le respondemos al cliente con
-        //la repuesta retornada, obtenida de la query.
         return responderAlCliente( null, res, respuesta )
 
       });
@@ -207,18 +156,13 @@ router
                       WHERE pendiente_id = ?`, [idPendiente], (error, respuesta) => {
 
         //Si hay un error, le respondemos al cliente con el error.
-        if (error){
+        if (error)
           return responderAlCliente( error, res );
-        }
-
-        //Si no hay error, le respondemos al cliente con
-        //la respuesta retornada obtenido de la query.
+          
         return responderAlCliente( null, res, respuesta );
       })
-    } else {
-      //Si hay un error en la conexión, se lo indicamos al cliente.
-      return responderAlCliente('Hubo un error con la conexión a MySQL :(', res)
-    }
+    } else
+        return responderAlCliente('Hubo un error con la conexión a MySQL :(', res);
 
   })
 
